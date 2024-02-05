@@ -13,8 +13,8 @@ close $fh;
 my $sudo_session_count = () = $log =~ m/session opened for user root/g;
 
 	# We put the regex match into
-	# list context, and then into
-	# scalar context, to get the
+	# list context and then into
+	# scalar context to get the
 	# number of matches.
 
 print $sudo_session_count;
