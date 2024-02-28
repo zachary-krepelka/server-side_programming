@@ -1,0 +1,51 @@
+# FILENAME: users-and-groups.service
+# AUTHOR: Zachary Krepelka
+# DATE: Wednesday, February 28th, 2024
+# ABOUT: a homework assignment for my server-side programming class
+# ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
+# PATH: /etc/systemd/user/users-and-groups.service
+
+################################################################################
+
+# This file is part of an assignment for my server-side programming class at
+# Saint Francis University.  I reproduce the assignment's instructions below to
+# provide context for the reader.
+#
+# 	Write an unprivileged Python script that exposes an HTTP
+# 	API on localhost:3000
+#
+# 		Your script should respond to HTTP POST requests
+#
+# 		Your script should only respond with data given
+# 		the proper username/password (test/abcABC123)
+#
+# 		Your script should have two methods, users and
+# 		groups, that provide a list of your system's
+# 		users and groups
+#
+# 		Methods are to be accessed via
+# 		http://YOUR-IP/api/METHODLinks
+# 		to an external site.
+#
+# 		When you reboot your computer the Python script
+# 		must automatically start and be accessible via
+# 		the above URL
+#
+# 	Add your script (and any other necessary files) to your
+# 	repo and submit your repo URL
+#
+# 	Example HTTP reply from the "users" method:
+#
+# 		{"0":"root","1":"daemon","2":"bin","3":"sys", ...
+
+################################################################################
+
+[Unit]
+Description=An API over HTTP to list the system's users and groups
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/bin/users-and-groups.py
+
+[Install]
+WantedBy=default.target
