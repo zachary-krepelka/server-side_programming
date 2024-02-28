@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 # FILENAME: users-and-groups.py
 # AUTHOR: Zachary Krepelka
@@ -97,7 +97,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-@app.route('/api/users', methods = ['POST'])
+@app.route('/users', methods = ['POST'])
 
 def users():
 
@@ -105,7 +105,7 @@ def users():
 
 	return catalog('/etc/passwd')
 
-@app.route('/api/groups', methods = ['POST'])
+@app.route('/groups', methods = ['POST'])
 
 def groups():
 
