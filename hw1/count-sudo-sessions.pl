@@ -10,7 +10,7 @@ my $log = do { local $/; <$fh> };
 
 close $fh;
 
-my $sudo_session_count = () = $log =~ m/session opened for user root/g;
+my $sudo_session_count = () = $log =~ m/sudo:session.*opened/g;
 
 	# We put the regex match into
 	# list context and then into

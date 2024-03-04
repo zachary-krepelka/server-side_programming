@@ -4,5 +4,5 @@
 # AUTHOR: Zachary Krepelka
 # DATE: Monday, January 15th, 2024
 
-grep 'session opened for user root' /var/log/auth.log | wc -l | tr -d '\n'
-
+grep 'sudo:session' /var/log/auth.log |
+grep opened | wc -l | tr -d '\n'
