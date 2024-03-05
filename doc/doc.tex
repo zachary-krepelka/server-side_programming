@@ -18,7 +18,9 @@
 \author{Zachary Krepelka}
 \date{Wednesday, January 17th, 2024}
 
+\usepackage{algpseudocode}
 \usepackage{csquotes}
+\usepackage{enumitem}
 \usepackage{graphicx} \graphicspath{ {images/} }
 \usepackage{minted} \setminted{bgcolor=lightgray!20!white}
 \usepackage{url}
@@ -431,7 +433,7 @@ Git's default branch (I will not explain branches here) used to be called
 default branch name to `main.' This can be done by typing \mintinline{bash}{git
 branch -M main}. You can call the main branch whatever you want.
 
-You have successfully created a local Git repository. 
+You have successfully created a local Git repository.
 
 \subsubsection{Uploading to the Cloud}
 
@@ -536,22 +538,29 @@ create a `hello-world' repository.
 	\label{fig:token}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}[p]
 	\centering
 	\includegraphics[width=\textwidth]{access-token-copy-and-paste.png}
 	\caption{An Example of a Personal Access Token.}
 	\label{fig:access-token-copy-and-paste}
 \end{figure}
 
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=\textwidth]{noreply-email.png}
+	\caption{GitHub's Email Settings Page.}
+	\label{fig:noreply-email}
+\end{figure}
+
 \clearpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%    _          _                         _       _ _   _ 
+%    _          _                         _       _ _   _
 %   /_\   _____(_)__ _ _ _  _ __  ___ _ _| |_   _| | |_/ |
 %  / _ \ (_-<_-< / _` | ' \| '  \/ -_) ' \  _| |_  .  _| |
 % /_/ \_\/__/__/_\__, |_||_|_|_|_\___|_||_\__| |_     _|_|
-%                |___/                           |_|_|    
+%                |___/                           |_|_|
 
 \section{SNMP sudo usage}
 
@@ -633,7 +642,7 @@ session lasts for 5 minutes.
 
 \subsection{Where I Stand}
 
-I have some limited prior experience with Perl, I didn't know anything about
+I have some limited prior experience with Perl, but I didn't know anything about
 SNMP before this assignment.
 
 %-------------------------------------------------------------------------------
@@ -644,63 +653,126 @@ We address the two components of the assignment separately.
 
 \subsubsection{Writing the Perl Script}
 
-To write the script, we will first need to know where to find information about
-sudo usage.  A few Google searches will tell us that we can find the information
-we need in
+Before we even touch the keyboard, we should plan out our program in advance.
+How will we find the number of sudo sessions?  A few Google searches will tell
+us to look in
 %
 \verb|/var/log/auth.log|\footnote{https://unix.stackexchange.com/q/167935}.
 %
 This is a log file containing information about \emph{authorization} attempts on
 the system. A careful study of this file will reveal that sudo sessions are
 recorded on lines containing the strings \verb|sudo:session| and \verb|opened|.
-%
 Hence, our script must count the occurrences of lines in
-\verb|/var/log/auth.log| containing both \verb|sudo:session| and \verb|opened|.
-%
-As a preliminary exercise, it is not hard to cook up a standard shell script for
-this purpose. In fact, it can be done quite succinctly as shown in Listing
-\ref{listing:sudo-session-shell-script}.  On line seven, we first search for the
-string `sudo:session' in our \verb|auth.log| file using grep, a command-line
-program whose name is an acronym for `global regular expression print.' Because
-grep deals with regular expressions, the user must be careful when searching for
-literal strings. If the string should happen to contain a metacharacter, the
-search will not be interpreted literally. In more complicated cases of literal
-string matching, prefer to use the \verb|-F| flag to \emph{fix} the string as a
-literal. For us, the strings are simple enough that this does not matter.  After
-searching for the `sudo:session' string, we search for the `opened' string in
-lines already containing the `sudo:session' string.  This is accomplished by
-\emph{piping} the first search command into the second.  Piping is the process
-of redirecting the output of one command as input into another command; it is
-signified by the vertical bar. Hence, the second grep command searches within
-the output of the first grep command. In effect, this captures lines in the
-original file containing both strings.  The output of these two commands are
-then piped into the word count command \verb|wc| with the flag \verb|-l| to
-determine the number of lines containing both strings. Finally, that number
-result is piped into the translate command \verb|tr| with the \verb|-d| command
-to \emph{delete} the trailing newline.
+\verb|/var/log/auth.log| containing both \verb|sudo:session| and \verb|opened|,
+although there are surely other ways to do it.  We express our plan as
+pseudocode in Listing \ref{listing:sudo-session-pseudocode}.
 
 \begin{listing}[h]
+\hrule \vspace{1em}
+\begin{algorithmic}[1]
+\Require authorization log file present and accessible on system
+\Ensure number as a string with no trailing newline
+\State{$count \gets 0$}
+\For{\textit{line} \textbf{in} \textit{authorization log file}}
+	\If{%
+		\textit{line} contains `sudo:session' \textbf{and}
+		\textit{line} contains `opened'
+	}
+		\State{$count \gets count + 1$}
+	\EndIf
+\EndFor
+\State \textbf{output} $count$
+\end{algorithmic}
+\vspace{1em} \hrule
+\caption{pseudocode for sudo session script}
+\label{listing:sudo-session-pseudocode}
+\end{listing}
+
+\paragraph{Shell Script}
+
+As a preliminary exercise, it is not hard to cook up a standard shell script to
+implement our plan.  In fact, it can be done quite succinctly as shown in
+Listing \ref{listing:sudo-session-shell-script}. Let's go through it together.
+
+\begin{itemize}[leftmargin=*]
+
+	\item
+
+		\textbf{line 1} The first line contains an interpreter
+		directive called a \emph{shebang}. It tells the system which
+		binary to use to execute the program, in this case
+		\verb|/bin/sh|.
+
+	\item
+
+		\textbf{line 7} Skipping over the comments, we first search
+		for the string `sudo:session' in our \verb|auth.log| file using
+		grep, a standard Unix command-line program whose name is an
+		acronym for `global regular expression print.'
+
+	\item
+
+		\textbf{line 8} After searching for the `sudo:session' string,
+		we search for the `opened' string in lines already containing
+		the `sudo:session' string.  This is accomplished by
+		\emph{piping} the first search command into the second.  Piping
+		is the process of redirecting the output of one command as input
+		into another command; it is signified by the vertical bar.
+		Hence, the second grep command searches within the output of the
+		first grep command. In effect, this captures lines in the
+		original file containing both strings.
+
+	\item
+
+		\textbf{line 9} The resulting output, which only contains the
+		lines having other search strings, is then piped into the word
+		count command \verb|wc| with the flag \verb|-l| to determine the
+		number of lines.
+
+	\item
+
+		\textbf{line 10} Finally, that number result is piped into the
+		translate command \verb|tr| with the \verb|-d| command to
+		\emph{delete} the trailing newline.
+
+\end{itemize}
+
+Our implementation in Listing \ref{listing:sudo-session-shell-script} looks
+quite different from our pseudo code in Listing
+\ref{listing:sudo-session-pseudocode}, but they are not so different; the
+for-loop is buried inside the grep command, and the logical AND is accomplished
+via piping.
+
+\begin{listing}
 \begin{minted}[frame=lines, linenos]{bash}
-#!/usr/bin/env sh
+#!/bin/sh
 
 # FILENAME: count-sudo-sessions.sh
 # AUTHOR: Zachary Krepelka
 # DATE: Monday, January 15th, 2024
 
-grep 'sudo:session' /var/log/auth.log |
-grep opened | wc -l | tr -d '\n'
+grep sudo:session /var/log/auth.log |
+grep opened |
+wc -l |
+tr -d '\n'
 \end{minted}
-\caption{a shell script to count the number of sudo sessions.}
+\caption{a shell script to count sudo sessions.}
 \label{listing:sudo-session-shell-script}
 \end{listing}
 
-We were asked to write the script in Perl. I initially wrote the shell script at
-the command line just to process my thoughts. Now that we understand what we
-need to do, writing the Perl script is just a matter of translation.  Listing
-\ref{listing:sudo-session-perl-script} shows our desired Perl script.  Let's
-walk through it line-by-line.
+\paragraph{An Aside}
 
-\begin{listing}
+Because grep deals with regular expressions, the user must be careful when
+searching for literal strings. If the string should happen to contain a
+metacharacter, the search will not be interpreted literally. In more complicated
+cases of literal string matching, prefer to use the \verb|-F| flag to \emph{fix}
+the string as a literal. For us, the strings are simple enough that this does
+not matter. Also observe that the search terms passed into grep are unquoted.
+Quoting is required for more complicated arguments such as those containing
+spaces. Lastly, note that pipes can be split across lines without using a line
+continuation character (the backslash).
+
+\begin{listing}[h]
 \begin{minted}[frame=lines, linenos]{perl}
 #!/usr/bin/env perl
 
@@ -708,7 +780,10 @@ walk through it line-by-line.
 # AUTHOR: Zachary Krepelka
 # DATE: Monday, January 15th, 2024
 
-open my $fh, '<', '/var/log/auth.log' or die $1;
+use strict;
+use warnings;
+
+open my $fh, '<', '/var/log/auth.log' or die $!;
 
 my $log = do { local $/; <$fh> };
 
@@ -724,17 +799,326 @@ my $sudo_session_count = () = $log =~ m/sudo:session.*opened/g;
 print $sudo_session_count;
 \end{minted}
 %stopzone
-\caption{a Perl script to count the number of sudo sessions.}
+\caption{a Perl script to count sudo sessions.}
 \label{listing:sudo-session-perl-script}
 \end{listing}
 
+\paragraph{Perl Script}
+
+We were asked to write the script in Perl. I initially wrote the shell script at
+the command line just to process my thoughts. Now that we understand what we
+need to do, writing the Perl script is just a matter of translation.  Listing
+\ref{listing:sudo-session-perl-script} shows our desired Perl script.  Let's
+walk through it line-by-line.
+
+\begin{itemize}[leftmargin=*]
+
+	\item
+
+		\textbf{line 7 - 8} These are called pragmas in Perl. Think of
+		them as hints to the interpreter. We want Perl interpreter to be
+		\emph{strict} with us and \emph{warn} us when it thinks we are
+		doing something wrong. It is a good practice to use these.
+		These pramgas will require us to declare variables before their
+		use with the \verb|my| keyword.
+
+	\item
+
+		\textbf{line 10} The open function as we use it here takes three
+		arguments as described in the
+		%
+		documentation\footnote{%
+			\url{https://perldoc.perl.org/functions/open }
+		}.
+		From left to right, there are the filehandle, mode, and
+		expression.  We will use the filehandle \verb|$fh| to interact
+		with or \emph{handle} the file. (\emph{Scalar} variables in
+		Perl\textemdash variables that are not arrays nor
+		hashes\textemdash are prefixed with the dollar sign. We declare
+		the variable in the function call.) We pass the character
+		\verb|<| as the mode to indicate that we only wish to
+		\emph{read} from the file.  For the expression, we pass the name
+		of the file we wish to open. The \verb|or| keyword is applied to
+		the exit code of the open function. If the function fails, the
+		script will prematurely \emph{die} with the error message
+		contained in the special variable \verb|$!|.
+
+	\item
+
+		\textbf{line 12} We read the entirety of \emph{auth.log} into a
+		single variable called \verb|$log|. Admittedly, this is not the
+		most memory efficient approach, but I will explain why I chose
+		to do this in a proceeding bullet point. The \verb|do| keyword
+		returns that last value in a block as indicated by brackets.
+		Inside the block, we enter into file slurp mode by un-defining
+		the special variable
+		%
+		\verb|$\|\footnote{\url{%
+		https://stackoverflow.com/questions/11708201/use-of-in-perl}}.
+		%
+		By surrounding \verb|$fh| in angle brackets, we invoke the
+		readline
+		function\footnote{\url{https://stackoverflow.com/a/12275502}},
+		which is influenced by \verb|$\|. It would normally return
+		line-by-line, but here it returns the whole file.
+
+		% This is messy! There has to be a better way to deal with URLs.
+		% Maybe I should use \footnotemarker and \footnotetext instead.
+
+	\item
+
+		\textbf{line 14} Since we are done reading the file, we should
+		let the interpreter know so it can let go of the file.
+
+	\item
+
+		\textbf{line 16} I chose to read the entire file into memory so
+		that I could capture the program's core functionality in a
+		single line of code\textemdash a temptation that I could not
+		resist.  Retrospectively, it probably would have been more
+		performant to have stuck to the original pseudo code that we
+		devised in Listing \ref{listing:sudo-session-pseudocode}, but I
+		am happy with what I wrote. In this line, we use a regular
+		expression to match occurrences of the substring `sudo:session'
+		\emph{eventually} followed by the substring `opened' within the
+		same line. The pattern \verb|.*| allows any number of
+		unspecified characters between the two strings.  The regex is
+		given the flag $g$ for `global' to match all occurrences of the
+		pattern. The regex is then applied to the variable \verb|$log|.
+		The results of that application are put into a list context,
+		meaning that we accumulate all matches of the pattern into a
+		list.  Finally, we put that list into a scalar context, meaning
+		that we capture the size of the list in a variable, in this case
+		\verb|$sudo_session_count|.
+
+	\item
+
+		\textbf{line 23} We output the count variable, choosing the
+		\verb|print| statement so no newline is applied.
+
+\end{itemize}
+
+\subsubsection{Configuring and Accessing SNMP}
+
+Now that we have our Perl script, we can move on to the second part of the
+assignment. A standard place to put custom scripts is in \verb|/usr/local/bin|,
+so go ahead and copy over the Perl script in Listing
+\ref{listing:sudo-session-perl-script} to that directory using your text editor
+of choice. As usual, we will be working from the terminal.
+%
+\mint{bash}{sudo vim /usr/local/bin/count-sudo-sessions.pl}
+%
+It will be easier to grab the file from my GitHub using \emph{web get}.
+%
+\begin{minted}{bash}
+sudo wget -O /user/local/bin/count-sudo-sessions.pl 
+
+https://raw.githubusercontent.com/
+	zachary-krepelka/
+	server-side_programming/
+	main/hw1/count-sudo-sessions.pl
+\end{minted}
+%
+The above is all one command.  I have broken up the URL so if fits on the page.
+See that the URL follows the pattern of \verb|/user/repo/branch/...|.
+
+In order for our script to successfully run, we need to make it executable with
+the \emph{change mode} command. \mint{bash}{ sudo chmod +x
+/usr/local/bin/count-sudo-sessions.pl}.  We can confirm that it worked by typing
+\mint{bash}{ls -l /usr/local/bin/count-sudo-sessions.pl} The file will appear
+green.  (You can also check the rwx
+%
+patterns\footnote{%
+	\url{https://www.redhat.com/sysadmin/linux-file-permissions-explained}}).
+
+\paragraph{Installing the Software}
+
+We will want to install software implementing the SNMP protocol on our system if
+it is not there already.  Since I am on Ubuntu, I will be using the \verb|apt|
+package manager.  Recalling that SNMP is a networking protocol, we will need
+software for both the server and for the client. To install the client-side
+software, use this command.
+%
+\mint{bash}{sudo apt-get install snmp}
+%
+This will provide a set of commands to interact with the snmp service on another
+computer.  The server-side software is installed like this.
+%
+\mint{bash}{sudo apt-get install snmpd}
+%
+Here the \verb|d| stands for \emph{demon}. This is what Linux calls its
+background processes.
+%
+Finally, we need MIBs, which are distributed separately for copyright reasons as
+discussed in the background subsection.
+%
+\mint{bash}{sudo apt-get install snmp-mibs-downloader}
+%
+All of this can be accomplished in a single command.
+%
+\mint{bash}{sudo apt-get install snmp snmpd snmp-mibs-downloader -y}
+%
+For this assignment, we will be treating the same computer as server and client.
+
+\paragraph{Configuring SNMP}
+
+The configuration files for our newly installed software are stored in the
+\verb|/etc/snmp| directory. By listing the contents of this directory with
+\mintinline{bash}{ls /etc/snmp}, it is observed that there are two configuration
+files, one for the client-side software and one for the server-side software,
+namely \verb|snmp.conf| and \verb|snmpd.conf| respectively.  We will need to
+edit these files.
+
+\subparagraph{snmp.conf}
+
+All we need to do in this file is uncomment the line beginning with \verb|mibs|
+to allow the loading of MIB files. See the comments at the top of the
+\verb|snmp.conf| file for an explanation of why this is required. You can use
+whatever text editor you like for this. I will use the sed text editor, which
+will return silently without opening up any windows like \verb|nano| or
+\verb|vim| would.
+%
+\mint{bash}{ sudo sed -i 's/^\(mibs\)/# \1/' /etc/snmp/snmp.conf}
+%
+I will not explain this line here, suffice to say that sed is a non-interactive
+text editor that transforms text using commands, must notably the substitution
+command.
+
+\subparagraph{snmpd.conf}
+
+Instead of editing this file directly, it is better to create our own in the
+\verb|/etc/snmp/snmpd.conf.d| subdirectory. Configuration files in this
+directory will be sourced by the snmp daemon. Listing \ref{listing:snmpd-conf}
+shows what we will need to put in this configuration file to complete this
+assignment. We'll walk through it line by line.
+
+\begin{listing}[h]
+\begin{minted}[frame=lines, linenos]{text}
+# put me in /etc/snmp/snmpd.conf.d/snmpd.conf
+rocommunity private 127.0.0.1 .1
+extend myscript /usr/local/bin/count-sudo-sessions.pl
+\end{minted}
+\caption{configuration file for the SNMP daemon.}
+\label{listing:snmpd-conf}
+\end{listing}
+
+\begin{itemize}[leftmargin=*]
+	
+	\item
+
+		\textbf{line 1} reminds use where we should put the file.
+
+	\item
+
+		\textbf{line 2} specifies a read-only community. In English,
+		this line just says who can access the SNMP server and how.
+
+		\begin{itemize}
+
+			\item
+
+				The first argument is the community string. In
+				this case, we have called it \verb|private|. The
+				community string acts like an ID or password.
+
+			\item
+
+				The second argument tells the snmp daemon from
+				which IP addresses to accept requests. In this
+				case, use our own IP address, the IP address of
+				\verb|localhost| or \verb|127.0.0.1|.  In a real
+				life situation, we would use a different IP. To
+				specify a range of IP addresses, a special
+				syntax can be used, but I will not discuss this
+				here.
+
+			\item
+
+				The third argument determines the level of
+				access to the SNMP MIB tree. Since we are not
+				concerned about security, we can just give full
+				access by specifying the root of the tree
+				\verb|.1|. This numeric syntax is called an
+				Object Identifier, or OID for short, as
+				discussed in the background subsection.  It
+				specifies locations in a MIB tree in the same
+				way that a file path specifies locations of
+				files in a file system. Instead of names,
+				numbers are used, and instead of slashes, dots
+				are used.
+
+		\end{itemize}
+
+	\item
+
+		\textbf{line 3} uses the \verb|extend| keyword whose syntax is
+		\mint{text}{extend name program arguments} This keyword allows
+		us to extend SNMP to return the output of any program.  We can
+		choose whatever name we want. For our program, we specify the
+		script that we wrote using its full file path. Our script does
+		not take any arguments.
+
+\end{itemize}
+
+\noindent You can download the file from my GitHub with this command.
+%
+\begin{minted}{bash}
+sudo wget -O /etc/snmp/snmpd.conf.d/snmpd.conf
+
+https://raw.githubusercontent.com/
+	zachary-krepelka/
+	server-side_programming/
+	main/hw1/snmpd.conf
+\end{minted}
+%
+You can also copy the file over by hand using your preferred text editor.
+\mint{bash}{vim /etc/snmp/snmpd.conf.d/snmpd.conf}
+%
+To instantiate our changes in the configuration directory, we have to restart
+the snmp daemon. The software on Linux responsible for managing background
+services is called \verb|systemd|, or system daemon. (Not every Linux distro
+uses systemd, but most do. It is the newer and preferred alternative.) To
+interact with the system deamon, we use the \verb|systemctl| command. We restart
+our service by typing \mint{bash}{sudo systemctl restart snmpd}.
+
+\paragraph{Accessing our script over SNMP}
+
+The command we use to access our SNMP service (the server) is provided the
+client-side software that we installed earlier with \mint{bash}{sudo apt-get
+install snmp} The two commands of interest to us are \verb|snmpget|, which gets
+a specific information node in the MIB tree using an OID, and \verb|snmpwalk|,
+which will retrieve multiple instances of informational nodes by walking the MIB
+tree. The command that we use to access our script over SNMP follows.
+%
+\begin{minted}{bash}
+snmpget -v2c -c private 127.0.0.1 \
+'NET-SNMP-EXTEND-MIB::nsExtendOutLine."myscript".1'}
+\end{minted}
+
+The \verb|-v| flag instructs snmpget which \emph{version} of the SNMP protocol
+to use. In this case, we chose version \verb|2c|. The \verb|-c| flag instructs
+snmpget which SNMP \emph{community} we are accessing. It's argument is the
+community string that we configured in \verb|snmpd.conf|, namely the string
+\verb|private|. Snmpget's first positional argument is the IP address of the
+SNMP server that we are trying to access. That's the local host whose IP address
+is \verb|127.0.0.1|. Snmpget's second positional argument is the object
+identifier. Recall that this identifies the pace of information that we desire
+to access. Earlier we said that OIDs follow a numeric format, e.g.,
+\verb|.1.3.6.1.2.1.1.3.0|. Here, we use a human-readable form of an OID. Observe
+that it contains the substring \verb|myscript|. This identifies the script that
+we extended SNMP with in Listing \ref{listing:snmpd-conf}.
+
+\subparagraph{Granting Permissions}
+
+If you run the above command, you should get an error.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%    _          _                         _       _ _   ____
-%   /_\   _____(_)__ _ _ _  _ __  ___ _ _| |_   _| | |_|__ /
-%  / _ \ (_-<_-< / _` | ' \| '  \/ -_) ' \  _| |_  .  _||_ \
-% /_/ \_\/__/__/_\__, |_||_|_|_|_\___|_||_\__| |_     _|___/
-%                |___/                           |_|_|
+%    _          _                         _       _ _   ___ 
+%   /_\   _____(_)__ _ _ _  _ __  ___ _ _| |_   _| | |_|_  )
+%  / _ \ (_-<_-< / _` | ' \| '  \/ -_) ' \  _| |_  .  _|/ / 
+% /_/ \_\/__/__/_\__, |_||_|_|_|_\___|_||_\__| |_     _/___|
+%                |___/                           |_|_|      
 
 \newpage
 
