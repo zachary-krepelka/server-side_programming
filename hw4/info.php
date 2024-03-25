@@ -1,6 +1,7 @@
 <?php phpinfo();
 
 // Put me in /var/www/html
+// Access me at https://localhost/info.php
 
 /*******************************************************************************
   __           ___
@@ -23,7 +24,7 @@ Install PHP module for Apache
 
 		sudo apt install libapache2-mod-php
 
-	It must bundle PHP with it?
+	It must bundle PHP with it? Unless it was already on my system.
 
 Restart Apache
 
