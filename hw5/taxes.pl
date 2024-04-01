@@ -6,8 +6,58 @@
 # ABOUT: a homework assignment for my server-side programming class
 # ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
 
-# The Perl script was not part of the assignment.
-# I wrote it as an intitial exercise to collect my thoughts.
+=begin comment
+
+This file is part of an assignment for my server-side programming class at Saint
+Francis University.  I reproduce the assignment's instructions below to provide
+context for the reader.
+
+	Write a PHP website that calculates the following items:
+
+		* Federal Withholding
+		* State Withholding
+		* Total Deductions
+		* Net Pay
+
+	You shall hard code the following items into variables in order to do
+	the calculations.
+
+		* Employee Name
+		* Hours worked in a week
+		* Hourly pay rate
+		* Federal tax withholding rate
+		* State tax withholding rate
+
+	Below is textual output that you can use in order to test whether your
+	math was done correctly.
+
+		Employee Name: Kevin Slonka
+		Hours Worked: 40.0
+		Pay Rate: $54.50
+		Gross Pay: $2180.00
+		Deductions:
+			Federal Withholding (24.5%): $534.10
+			State Withholding (5.5%): $119.90
+			Total Deduction: $654.00
+		Net Pay: $1526.00
+
+	Output:
+
+		* Your web page must show the output in the form of an HTML
+		  table with an appropriate number of rows and columns so that
+		  the data is easily readable.
+
+		* Tell the user in what federal tax bracket they fall.
+		  Use the 2024 brackets.
+
+	Add the PHP file to your repo and submit your repo URL.
+
+This Perl script is not formally part of the assignment.
+I wrote it as an intitial exercise to collect my thoughts.
+
+=end comment
+
+=cut
 
 use strict;
 use warnings;
@@ -49,7 +99,7 @@ my $state_withholding   = $gross_annual_income * $state_tax_withholding_rate;
 my $total_withholding   = $state_withholding + $federal_withholding;
 my $net_annual_income   = $gross_annual_income - $total_withholding;
 
-################################################################################
+#################################### OUTPUT ####################################
 
 say "Employee Name: $employee";
 

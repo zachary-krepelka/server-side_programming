@@ -7,6 +7,54 @@
 // ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
 // PATH: /var/www/html/taxes.php
 
+/*******************************************************************************
+
+This file is part of an assignment for my server-side programming class at Saint
+Francis University.  I reproduce the assignment's instructions below to provide
+context for the reader.
+
+	Write a PHP website that calculates the following items:
+
+		* Federal Withholding
+		* State Withholding
+		* Total Deductions
+		* Net Pay
+
+	You shall hard code the following items into variables in order to do
+	the calculations.
+
+		* Employee Name
+		* Hours worked in a week
+		* Hourly pay rate
+		* Federal tax withholding rate
+		* State tax withholding rate
+
+	Below is textual output that you can use in order to test whether your
+	math was done correctly.
+
+		Employee Name: Kevin Slonka
+		Hours Worked: 40.0
+		Pay Rate: $54.50
+		Gross Pay: $2180.00
+		Deductions:
+			Federal Withholding (24.5%): $534.10
+			State Withholding (5.5%): $119.90
+			Total Deduction: $654.00
+		Net Pay: $1526.00
+
+	Output:
+
+		* Your web page must show the output in the form of an HTML
+		  table with an appropriate number of rows and columns so that
+		  the data is easily readable.
+
+		* Tell the user in what federal tax bracket they fall.
+		  Use the 2024 brackets.
+
+	Add the PHP file to your repo and submit your repo URL.
+
+*******************************************************************************/
+
 $employee        =  "Kevin Slonka" ;
 $hours_per_week  =  40             ;
 $hourly_wage     =  54.5           ;
