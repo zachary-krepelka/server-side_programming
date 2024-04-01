@@ -130,7 +130,8 @@ $net_annual_income   = $gross_annual_income - $total_withholding;
 			<tr>
 				<td>Employee Name</td>
 
-				<td align="right"><?php
+				<td align="right">
+				<?php
 					echo $employee;
 				?></td>
 			</tr>
@@ -138,27 +139,30 @@ $net_annual_income   = $gross_annual_income - $total_withholding;
 			<tr>
 				<td>Hours Worked</td>
 
-				<td align="right"><?php
-				printf("%.1f",
-				$hours_per_week);
+				<td align="right">
+				<?php
+					printf("%.1f",
+					$hours_per_week);
 				?></td>
 			</tr>
 
 			<tr>
 				<td>Pay Rate</td>
 
-				<td align="right"><?php
-				printf("$%.2f",
-				$hourly_wage);
+				<td align="right">
+				<?php
+					printf("$%.2f",
+					$hourly_wage);
 				?></td>
 			</tr>
 
 			<tr>
 				<td>Gross Pay</td>
 
-				<td align="right"><?php
-				printf("$%.2f",
-				$gross_annual_income / 52);
+				<td align="right">
+				<?php
+					printf("$%.2f",
+					$gross_annual_income / 52);
 				?></td>
 			</tr>
 
