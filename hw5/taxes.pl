@@ -3,7 +3,11 @@
 # FILENAME: taxes.pl
 # AUTHOR: Zachary Krepelka
 # DATE: Sunday, March 31st, 2024
-# ABOUT: a homework assignment
+# ABOUT: a homework assignment for my server-side programming class
+# ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
+
+# The Perl script was not part of the assignment.
+# I wrote it as an intitial exercise to collect my thoughts.
 
 use strict;
 use warnings;

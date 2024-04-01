@@ -3,7 +3,8 @@
 // FILENAME: taxes.php
 // AUTHOR: Zachary Krepelka
 // DATE: Sunday, March 31st, 2024
-// ABOUT: a homework assignment
+// ABOUT: a homework assignment for my server-side programming class
+// ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
 // PATH: /var/www/html/taxes.php
 
 $employee        =  "Kevin Slonka" ;
@@ -14,13 +15,13 @@ $gross_annual_income = $hourly_wage * $hours_per_week * 52;
 
 $tax_bracket = array (
 
-	"0.10" => array(       0,    11_000 ),
-	"0.12" => array(  11_001,    44_725 ),
-	"0.22" => array(  44_726,    95_375 ),
-	"0.24" => array(  95_376,   182_100 ),
-	"0.32" => array( 182_101,   231_250 ),
-	"0.35" => array( 231_251,   578_125 ),
-	"0.37" => array( 578_126, 1_000_000 )
+	"0.10" => [       0,    11_000 ],
+	"0.12" => [  11_001,    44_725 ],
+	"0.22" => [  44_726,    95_375 ],
+	"0.24" => [  95_376,   182_100 ],
+	"0.32" => [ 182_101,   231_250 ],
+	"0.35" => [ 231_251,   578_125 ],
+	"0.37" => [ 578_126,       INF ],
 
 );
 
@@ -31,6 +32,8 @@ foreach ($tax_bracket as $rate => $range) {
 	if ($lower <= $gross_annual_income && $gross_annual_income <= $upper) {
 
 		$federal_tax_withholding_rate = $rate;
+
+		$employee_bracket = $range;
 
 	}
 
@@ -47,81 +50,134 @@ $net_annual_income   = $gross_annual_income - $total_withholding;
 
 <html>
 
-<head>
-	<title>Taxes</title>
+	<head>
 
-	<style>
-		table {
-			display:inline-table;
-		}
-		table, tr, td {
-			border: 1px solid black;
-			border-collapse: collapse;
-		}
-	</style>
-</head>
+		<title>Taxes</title>
 
-<body>
-	<table>
+		<style>
+			table, tr, td {
+				border: 1px solid black;
+				border-collapse: collapse;
+			}
+		</style>
 
-		<caption>EMPLOYEE INFORMATION</caption>
+	</head>
 
-		<!-- Filling out info verbatim to get started -->
+	<body> <div align="center">
 
-		<tr>
-			<td>Employee Name</td>
-			<td>Kevin Slonka</td>
-		</tr>
+		<h2>Server-side Programming Homework #5</h2>
 
-		<tr>
-			<td>Hours Worked</td>
-			<td>40.0</td>
-		</tr>
+		<p><?php echo
 
-		<tr>
-			<td>Pay Rate</td>
-			<td>$54.50</td>
-		</tr>
+			"$employee falls in the tax bracket ranging from $" .
+			number_format($employee_bracket[0]) . ' to $' .
+			number_format($employee_bracket[1]) . '.';
 
-		<tr>
-			<td>Gross Pay</td>
-			<td>$4180.00</td>
-		</tr>
+		?></p>
 
-	</table>
+		<p> <table>
 
-	<table>
+			<caption>EMPLOYEE INFORMATION</caption>
 
-		<caption>DEDUCTIONS</caption>
+			<tr>
+				<td>Employee Name</td>
 
-		<!-- Filling out info verbatim to get started -->
+				<td align="right"><?php
+					echo $employee;
+				?></td>
+			</tr>
 
-		<tr>
-			<td>Federal Withholding</td>
-			<td>24.5%</td>
-			<td>$534.10</td>
-		</tr>
+			<tr>
+				<td>Hours Worked</td>
 
-		<tr>
-			<td>State Withholding</td>
-			<td>5.5%</td>
-			<td>$119.90</td>
-		</tr>
+				<td align="right"><?php
+				printf("%.1f",
+				$hours_per_week);
+				?></td>
+			</tr>
 
-		<tr>
-			<td>Total Deduction</td>
-			<td></td>
-			<td>$654.00</td>
-		</tr>
+			<tr>
+				<td>Pay Rate</td>
 
-		<tr>
-			<td>Net Pay</td>
-			<td></td>
-			<td>$1526.00</td>
-		</tr>
+				<td align="right"><?php
+				printf("$%.2f",
+				$hourly_wage);
+				?></td>
+			</tr>
 
-	</table>
+			<tr>
+				<td>Gross Pay</td>
 
-</body>
+				<td align="right"><?php
+				printf("$%.2f",
+				$gross_annual_income / 52);
+				?></td>
+			</tr>
 
+		</table> </p>
+
+		<p> <table>
+
+			<caption>TAX DEDUCTIONS</caption>
+
+			<tr>
+				<td>Federal Withholding</td>
+
+				<td align="right">
+				<?php
+					printf("%.1f%%",
+					$federal_tax_withholding_rate * 100);
+				?></td>
+
+				<td align="right">
+				<?php
+					printf("$%.2f",
+					$federal_withholding / 52);
+				?></td>
+			</tr>
+
+			<tr>
+				<td>State Withholding</td>
+
+				<td align="right">
+				<?php
+					printf("%.1f%%",
+					$state_tax_withholding_rate * 100);
+				?></td>
+
+				<td align="right">
+				<?php
+					printf("$%.2f",
+					$state_withholding / 52);
+				?></td>
+			</tr>
+
+			<tr>
+				<td>Total Deduction</td>
+
+				<td align="right">n/a</td>
+
+				<td align="right">
+				<?php
+					printf("$%.2f",
+					$total_withholding / 52);
+				?></td>
+			</tr>
+
+			<tr>
+				<td>Net Pay</td>
+
+				<td align="right">n/a</td>
+
+				<td align="right">
+				<?php
+					printf("$%.2f",
+					$net_annual_income / 52);
+				?></td>
+			</tr>
+
+		</table>
+		</p>
+	</div>
+	</body>
 </html>
