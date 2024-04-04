@@ -214,7 +214,7 @@ class Employee {
 			$this->getFederalTaxWithholdingRate();
 	}
 
-	public function generateReport($period, $indentCount) {
+	public function generateTaxReport($period, $indentCount) {
 
 		$money   = fn($num)  => '$' . number_format($num, 2);
 		$percent = fn($rate) => sprintf("%.1f%%", $rate * 100);
@@ -297,8 +297,8 @@ class Employee {
 			<h2>Server-side Programming Homework #5</h2>
 			<?php
 
-$professor = new Employee('Kevin Slonka', 'PA', 'single-filer', 54.5, 40);
-$professor->generateReport('weekly', 3);
+$professor = new Employee('Kevin Slonka', 'PA', 'married-filing-jointy', 54.5, 40);
+$professor->generateTaxReport('weekly', 3);
 
 			?>
 		</div>
