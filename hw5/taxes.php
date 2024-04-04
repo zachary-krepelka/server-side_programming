@@ -5,6 +5,7 @@
 // DATE: Sunday, March 31st, 2024
 // ABOUT: a homework assignment for my server-side programming class
 // ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
+// UPDATED: Thursday, April 4th, 2024 at 5:41 AM
 // PATH: /var/www/html/taxes.php
 
 /*******************************************************************************
@@ -55,181 +56,251 @@ context for the reader.
 
 *******************************************************************************/
 
-$employee        =  "Kevin Slonka" ;
-$hours_per_week  =  40             ;
-$hourly_wage     =  54.5           ;
+class Employee {
 
-$gross_annual_income = $hourly_wage * $hours_per_week * 52;
+	private static $taxBrackets = array(
 
-$tax_bracket = array (
+		'single-filer' => [
 
-	"0.10" => [       0,    11_000 ],
-	"0.12" => [  11_001,    44_725 ],
-	"0.22" => [  44_726,    95_375 ],
-	"0.24" => [  95_376,   182_100 ],
-	"0.32" => [ 182_101,   231_250 ],
-	"0.35" => [ 231_251,   578_125 ],
-	"0.37" => [ 578_126,       INF ],
+			"0.10" => [       0,    11_000 ],
+			"0.12" => [  11_001,    44_725 ],
+			"0.22" => [  44_726,    95_375 ],
+			"0.24" => [  95_376,   182_100 ],
+			"0.32" => [ 182_101,   231_250 ],
+			"0.35" => [ 231_251,   578_125 ],
+			"0.37" => [ 578_126,       INF ],
+		],
 
-);
+		'married-filing-jointy' => [
 
-foreach ($tax_bracket as $rate => $range) {
+			"0.10" => [       0,    22_000 ],
+			"0.12" => [  22_001,    89_450 ],
+			"0.22" => [  89_451,   190_750 ],
+			"0.24" => [ 190_751,   364_200 ],
+			"0.32" => [ 364_201,   462_500 ],
+			"0.35" => [ 462_501,   693_750 ],
+			"0.37" => [ 693,751,       INF ],
+		],
 
-	list($lower, $upper) = $range;
+		'married-filing-separately' => [
 
-	if ($lower <= $gross_annual_income && $gross_annual_income <= $upper) {
+			"0.10" => [       0,    11_000 ],
+			"0.12" => [  11_001,    44_725 ],
+			"0.22" => [  44_726,    95_375 ],
+			"0.24" => [  95_376,   182_100 ],
+			"0.32" => [ 182_101,   231_250 ],
+			"0.35" => [ 231_251,   346_875 ],
+			"0.37" => [ 346_876,       INF ],
+		],
 
-		$federal_tax_withholding_rate = $rate;
+		'head-of-household' => [
 
-		$employee_bracket = $range;
+			"0.10" => [       0,    11_000 ],
+			"0.12" => [  11_001,    44_725 ],
+			"0.22" => [  44_726,    95_375 ],
+			"0.24" => [  95_376,   182_100 ],
+			"0.32" => [ 182_101,   231_250 ],
+			"0.35" => [ 231_251,   346_875 ],
+			"0.37" => [ 346_876,       INF ],
+		],
+	);
+
+	private static $periods = array(
+
+		'daily'        =>  1/7,
+		'weekly'       =>  1,
+		'monthly'      =>  3.345,
+		'quarterly'    =>  13,
+		'semi-annual'  =>  26,
+		'annual'       =>  52,
+
+		# https://www.google.com/search?q=how+many+weeks+in+a+month
+
+	);
+
+	private $name, $state, $filingStatus, $hourlyWage, $hoursPerWeek;
+
+	function __construct(
+
+			$name,
+			$state,
+			$filingStatus,
+			$hourlyWage,
+			$hoursPerWeek
+		) {
+
+		$this->name          =  $name;
+		$this->state         =  $state;
+		$this->filingStatus  =  $filingStatus;
+		$this->hourlyWage    =  $hourlyWage;
+		$this->hoursPerWeek  =  $hoursPerWeek;
 
 	}
 
-}
+	private function getName() {
 
-$state_tax_withholding_rate = 0.0307;
+		return $this->name;
+	}
 
-$federal_withholding = $gross_annual_income * $federal_tax_withholding_rate;
-$state_withholding   = $gross_annual_income * $state_tax_withholding_rate;
-$total_withholding   = $state_withholding + $federal_withholding;
-$net_annual_income   = $gross_annual_income - $total_withholding;
+	private function getHourlyWage() {
 
-?>
+		return $this->hourlyWage;
+	}
 
-<html>
+	private function getHoursWorked($period) {
 
-	<head>
+		return $this->hoursPerWeek * self::$periods[$period];
+	}
 
-		<title>Taxes</title>
+	private function getGrossIncome($period) {
 
-		<style>
-			table, tr, td {
-				border: 1px solid black;
-				border-collapse: collapse;
+		return $this->getHourlyWage() * $this->getHoursWorked($period);
+
+	}
+
+	private function getStateTaxWithholdingRate() {
+
+		switch($this->state) {
+
+			case 'PA':
+				return 0.0307;
+			default:
+				return NAN;
+		}
+	}
+
+	private function getFederalTaxWithholdingRate() {
+
+		$income = $this->getGrossIncome('annual');
+
+		foreach(self::$taxBrackets[$this->filingStatus]
+					as $rate => list($lower, $upper)) {
+
+			if ($lower <= $income && $income <= $upper) {
+
+				return $rate;
 			}
+		}
+		return NAN;
+	}
+
+	private function getTaxBracket() {
+
+		$money = fn($num) => '$' . number_format($num, 2);
+
+		$income = $this->getGrossIncome('annual');
+
+		foreach(self::$taxBrackets[$this->filingStatus]
+					as $rate => list($lower, $upper)) {
+
+			if ($lower <= $income && $income <= $upper) {
+
+				return
+					$this->name                  .
+					' falls in the '             .
+					$this->filingStatus          .
+					' tax bracket ranging from ' .
+					$money($lower) . ' to '      .
+					$money($upper) . '.'         ;
+			}
+		}
+		return "";
+	}
+
+	private function getWithholdingRate() {
+
+		return
+			$this->getStateTaxWithholdingRate() +
+			$this->getFederalTaxWithholdingRate();
+	}
+
+	public function generateReport($period, $indentCount) {
+
+		$money   = fn($num)  => '$' . number_format($num, 2);
+		$percent = fn($rate) => sprintf("%.1f%%", $rate * 100);
+		$time    = fn($num)  => number_format($num, 1);
+
+		$i = str_repeat("\t", $indentCount);
+
+		$start =
+
+			"\n$i<p>"                        .
+			"\n$i\t<table>"                  .
+			"\n$i\t\t<caption>%1s</caption>" ;
+
+		$end =
+			"\n$i\t</table>" .
+			"\n$i</p>"       ;
+
+		$pairs = array(
+		'Employee Name'   => $this->getName(),
+		'Hourly Pay Rate' => $money($this->getHourlyWage()),
+		'Hours Worked'    => $time($this->getHoursWorked($period)),
+		'Gross Pay'       => $money($this->getGrossIncome($period)),
+		);
+
+		$rates = array(
+		'Federal Withholding' => $this->getFederalTaxWithholdingRate(),
+		'State Withholding'   => $this->getStateTaxWithholdingRate(),
+		'Total Deduction'     => $this->getWithholdingRate(),
+		'Net Pay'             => 1 - $this->getWithholdingRate(),
+		);
+
+		echo "<p>" . $this->getTaxBracket() . "</p>";
+
+		printf($start, 'EMPLOYEE INFORMATION');
+
+		foreach ($pairs as $key => $value) {
+
+			printf(
+			"\n$i\t\t<tr>"                           .
+			"\n$i\t\t\t<td>%1s</td>"                 .
+			"\n$i\t\t\t<td align=\"right\">%2s</td>" .
+			"\n$i\t\t</tr>"                          ,
+			$key, $value);
+
+		}
+
+		print $end;
+
+		printf($start, 'TAX DEDUCTIONS');
+
+		foreach ($rates as $name => $rate) {
+
+			printf(
+			"\n$i\t\t<tr>"                           .
+			"\n$i\t\t\t<td>%1s</td>"                 .
+			"\n$i\t\t\t<td align=\"right\">%2s</td>" .
+			"\n$i\t\t\t<td align=\"right\">%3s</td>" .
+			"\n$i\t\t</tr>"                          ,
+
+			$name,
+			$percent($rate),
+			$money($rate * $this->getGrossIncome($period)));
+		}
+
+		print $end . "\n";
+	}
+}
+?>
+<html>
+	<head>
+		<style>
+		table, tr, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
 		</style>
-
 	</head>
+	<body>
+		<div align="center">
+			<h2>Server-side Programming Homework #5</h2>
+			<?php
 
-	<body> <div align="center">
+$professor = new Employee('Kevin Slonka', 'PA', 'single-filer', 54.5, 40);
+$professor->generateReport('weekly', 3);
 
-		<h2>Server-side Programming Homework #5</h2>
-
-		<p><?php echo
-
-			"$employee falls in the tax bracket ranging from $" .
-			number_format($employee_bracket[0]) . ' to $' .
-			number_format($employee_bracket[1]) . '.';
-
-		?></p>
-
-		<p> <table>
-
-			<caption>EMPLOYEE INFORMATION</caption>
-
-			<tr>
-				<td>Employee Name</td>
-
-				<td align="right">
-				<?php
-					echo $employee;
-				?></td>
-			</tr>
-
-			<tr>
-				<td>Hours Worked</td>
-
-				<td align="right">
-				<?php
-					printf("%.1f",
-					$hours_per_week);
-				?></td>
-			</tr>
-
-			<tr>
-				<td>Pay Rate</td>
-
-				<td align="right">
-				<?php
-					printf("$%.2f",
-					$hourly_wage);
-				?></td>
-			</tr>
-
-			<tr>
-				<td>Gross Pay</td>
-
-				<td align="right">
-				<?php
-					printf("$%.2f",
-					$gross_annual_income / 52);
-				?></td>
-			</tr>
-
-		</table> </p>
-
-		<p> <table>
-
-			<caption>TAX DEDUCTIONS</caption>
-
-			<tr>
-				<td>Federal Withholding</td>
-
-				<td align="right">
-				<?php
-					printf("%.1f%%",
-					$federal_tax_withholding_rate * 100);
-				?></td>
-
-				<td align="right">
-				<?php
-					printf("$%.2f",
-					$federal_withholding / 52);
-				?></td>
-			</tr>
-
-			<tr>
-				<td>State Withholding</td>
-
-				<td align="right">
-				<?php
-					printf("%.1f%%",
-					$state_tax_withholding_rate * 100);
-				?></td>
-
-				<td align="right">
-				<?php
-					printf("$%.2f",
-					$state_withholding / 52);
-				?></td>
-			</tr>
-
-			<tr>
-				<td>Total Deduction</td>
-
-				<td align="right">n/a</td>
-
-				<td align="right">
-				<?php
-					printf("$%.2f",
-					$total_withholding / 52);
-				?></td>
-			</tr>
-
-			<tr>
-				<td>Net Pay</td>
-
-				<td align="right">n/a</td>
-
-				<td align="right">
-				<?php
-					printf("$%.2f",
-					$net_annual_income / 52);
-				?></td>
-			</tr>
-
-		</table>
-		</p>
-	</div>
+			?>
+		</div>
 	</body>
 </html>
