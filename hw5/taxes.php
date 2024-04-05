@@ -171,12 +171,20 @@ class Employee {
 
 	private function getFederalTaxWithholdingRate() {
 
+		static $cache;
+
+		if (isset($cache)) {
+			return $cache;
+		}
+
 		$income = $this->getGrossIncome('annual');
 
 		foreach(self::$taxBrackets[$this->filingStatus]
 					as $rate => list($lower, $upper)) {
 
 			if ($lower <= $income && $income <= $upper) {
+
+				$cache = $rate;
 
 				return $rate;
 			}
