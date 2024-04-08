@@ -75,7 +75,7 @@ class student {
 
 		$start =
 
-			"\n$i<p>"       .
+			"\n$i<p>"                .
 			"\n$i\t<table border=1>" ;
 
 		$row =
@@ -103,7 +103,7 @@ class student {
 
 		}
 
-		$list .= "\n$i\t\t\t\t</ul>";
+		$list .= "\n$i\t\t\t\t</ul>\n$i\t\t\t";
 
 		print $start;
 		printf($row, 'Name', $this->getFormattedName());
