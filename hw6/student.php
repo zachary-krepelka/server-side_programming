@@ -106,9 +106,11 @@ class student {
 		$list .= "\n$i\t\t\t\t</ul>\n$i\t\t\t";
 
 		print $start;
-		printf($row, 'Name', $this->getFormattedName());
-		printf($row, 'Student ID', $this->getID());
-		printf($row, 'Grades', $list);
+
+		printf( $row , 'Name'       , $this->getFormattedName() );
+		printf( $row , 'Student ID' , $this->getID()            );
+		printf( $row , 'Grades'     , $list                     );
+
 		print $end;
 
 	}
