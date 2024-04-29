@@ -225,12 +225,13 @@ function processSyslogLine($line) {
 
 	// #1 MESSAGE
 
-		// Split after the first occurrence of a square bracket using a
-		// zero-width look-behind assertion.
+		// Split after the first occurrence of a closing square bracket
+		// using a zero-width look-behind assertion.
 
 		$arr = preg_split('/(?<=])/', $line, 2);
 
 		// Parallel assignment gives an error here and nowhere else?
+		// Must mean that my assumptions are wrong.
 		// Warning: Undefined array key 1
 
 		$everythingElse = $arr[0];
