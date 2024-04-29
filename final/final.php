@@ -1,12 +1,82 @@
 <?php
 
-
-// FILENAME: exam.php
+// FILENAME: final.php
 // AUTHOR: Zachary Krepelka
 // DATE: Sunday, April 28th, 2024
+// ABOUT: the final exam for my server-side programming class
+// ORIGIN: https://github.com/zachary-krepelka/server-side_programming.git
+// PATH: /var/www/html/hw8.php
 
+/*******************************************************************************
 
-/* https://stackoverflow.com/q/7771586
+This file is part of the final exam for my server-side programming class at
+Saint Francis University.  I reproduce the assignment's instructions below to
+provide context for the reader.
+
+	Create a PHP website to meet the following requirements.
+
+	 1) Look of the website (font sizes, etc.) shall be at least as distinct
+	    as in the provided screenshots.
+
+	 2) Only 3 files shall be used for the website:
+
+		* final.php (contains all code for the project)
+
+		* final_logout.php (contains only the code to destroy the
+		  session and redirect to main page)
+
+		* auth.db (contain the tab delimited user/password combinations)
+
+	 3) Initial page access (and any unauthenticated page access) shall
+	   present the logon form
+
+ 	 4) All pages shall have the CPSC222 Final Exam header and footer as
+	   shown in the screenshots
+
+	 5) Authentication shall be accomplished via reading the auth.db file
+
+	 6) Upon successful authentication, users shall be presented with the
+	    Dashboard that:
+
+		* Welcomes their username
+
+		* Provides the ability to logout
+
+		* Lists the three reports that can be run (user list, group
+		  list, syslog)
+
+	 7) Unsuccessful authentication shall present the user with an error
+	    message
+
+	 8) Reports shall be access via a GET variable named 'page'
+
+	 9) Invalid 'page' accesses shall present the user with an error message
+
+	10) The User List report shall present the contents of /etc/passwd in a
+	    table
+
+	11) The Group List report shall present the contents of /etc/group in a
+	    table
+
+	12) The Syslog report shall present the contents of /var/log/syslog in a
+	    table
+
+	Extra credit: Only store password hashes in the auth.db file instead of
+	plain-text passwords
+
+	Extra credit: Add a hidden page (with some clever way to access it) that
+	is an "about the author" page.  Add a photo of you and a paragraph about
+	your interests and what you'd like to do after college.  Add a note to
+	your submission that you have done this so I know to look for it.
+
+	Add your 3 files to your repo and submit your repo URL
+
+*******************************************************************************/
+
+/* To provide file access to /var/log/syslog:
+ *
+ * https://stackoverflow.com/q/7771586
+ *
  * <?php echo exec('whoami'); ?>
  *
  * ls -l /var/log/syslog
@@ -15,7 +85,6 @@
  *
  * sudo reboot
  */
-
 
 session_start();
 
@@ -116,9 +185,7 @@ function validate($candidate_username, $candidate_password) {
 
 function sanitize($str) {
 
-	// Only lowercase, alphanumeric chars allowed.
-
-	return preg_replace('/[^a-zA-Z0-9]+/', '', trim($str));
+	return preg_replace('/[^-a-zA-Z0-9]+/', '', trim($str));
 
 } // func
 
@@ -156,33 +223,34 @@ function processSyslogLine($line) {
 
 	// #1 MESSAGE
 
-	// Split after the first occurrence of a square bracket using a
-	// zero-width look-behind assertion.
+		// Split after the first occurrence of a square bracket using a
+		// zero-width look-behind assertion.
 
-	$arr = preg_split('/(?<=])/', $line, 2);
+		$arr = preg_split('/(?<=])/', $line, 2);
 
-	 // Parallel assignment gives an error here and nowhere else?
-	 // Warning: Undefined array key 1
+		// Parallel assignment gives an error here and nowhere else?
+		// Warning: Undefined array key 1
 
-	$everythingElse = $arr[0];
-	$message        = $arr[1] ?? ""; // null coalescing operator
+		$everythingElse = $arr[0];
+		$message        = $arr[1] ?? ""; // null coalescing operator
 
 	// #2 DATE
 
-	list($date, $everythingElse) =
+		list($date, $everythingElse) =
 
 		// Split on the first occurrence of a space preceded by a digit
 		// character and succeeded by a non-digit character.
 
 		preg_split('/(?<=[0-9]) (?=[^0-9])/', $everythingElse, 2);
 
+		// Assumes that the hostname does not start with a digit.
+		// Retropsectivey, this is a bad assumption.
+
 	// #3 HOSTNAME & PID
 
-	list($hostname, $processID) = explode(' ', $everythingElse, 2);
+		list($hostname, $processID) = explode(' ', $everythingElse, 2);
 
-	$result = array($date, $hostname, $processID, $message);
-
-	return $result;
+	return array($date, $hostname, $processID, $message);
 
 } // func
 
