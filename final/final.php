@@ -1,0 +1,334 @@
+<?php
+
+
+// FILENAME: exam.php
+// AUTHOR: Zachary Krepelka
+// DATE: Sunday, April 28th, 2024
+
+
+/* https://stackoverflow.com/q/7771586
+ * <?php echo exec('whoami'); ?>
+ *
+ * ls -l /var/log/syslog
+ *
+ * sudo usermod -a -G adm www-data
+ *
+ * sudo reboot
+ */
+
+
+session_start();
+
+$footer = date("Y-m-d h:i:s A");
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+	$un = sanitize($_POST['username']);
+
+	$login_success = validate($un, sanitize($_POST['password']));
+
+	if ($login_success) $_SESSION['username'] = $un;
+
+} // if
+
+if (isset($_SESSION['username'])) {
+
+	echo <<<_END
+	<html>
+		<style>
+			table, th, td {
+				border: 1px solid;
+			}
+		</style>
+		<head>
+			<title>CPSC222 Final Exam</title>
+		</head>
+		<body>
+			<h1>CPSC222 Final Exam</h1>
+			<h2>
+				Welcome, {$_SESSION['username']}!
+				(<a href="final_logout.php">Log Out</a>)
+			</h2>
+	_END;
+
+	if (isset($_GET['page'])) {
+
+		$page = intval($_GET['page']);
+
+		echo <<<_END
+				<p><a href="{$_SERVER['PHP_SELF']}">
+				&lt;&nbsp;Back to Dashboard<a/></p>
+		_END;
+
+		renderPage($page);
+
+	} else {
+
+		echo <<<_END
+
+			<p> Dashboard:
+			<ul>
+				<li><a href="?page=1">User list</a></li>
+				<li><a href="?page=2">Group list</a></li>
+				<li><a href="?page=3">Syslog</a></li>
+			</ul>
+			</p>
+		_END;
+
+	} // if
+
+	echo <<<_END
+			<hr><footer>$footer</footer>
+		</body>
+	</html>
+	_END;
+
+	exit();
+
+} // if
+
+function validate($candidate_username, $candidate_password) {
+
+	$fh = fopen('auth.db', "r") or die("Failed to read the database.");
+
+	while($line = fgets($fh)) {
+
+		if(!feof($fh)) {
+
+			list($username, $password) = explode("\t", trim($line));
+
+			if (
+				$candidate_username === $username &&
+				$candidate_password === $password
+			) {
+
+				fclose($fh); return true;
+
+			} // if
+
+		} // if
+
+	} // while
+
+	fclose($fh); return false;
+
+} // func
+
+function sanitize($str) {
+
+	// Only lowercase, alphanumeric chars allowed.
+
+	return preg_replace('/[^a-zA-Z0-9]+/', '', trim($str));
+
+} // func
+
+function readDSV($fname, $delim = ',') {
+
+	// BREAKS THE SINGLE-RESPONSIBILITY PRINCIPLE
+
+	// I didn't realize that syslog wasn't a DSV.  I didn't even bother to
+	// look. I just assumed that it was like the others.  It's too late to
+	// rethink things now.  Here is a half-baked fix.
+
+	$customLogic = $fname === '/var/log/syslog';
+
+	$AoA = array();
+
+	$fh = fopen($fname, "r") or die("Failed to open DSV file.");
+
+	while($line = fgets($fh))
+
+		if(!feof($fh))
+
+			$AoA[] =
+			$customLogic ?
+			processSyslogLine($line) :
+			explode($delim, trim($line));
+
+	fclose($fh); return $AoA;
+
+} // func
+
+function processSyslogLine($line) {
+
+	// It doesn't look like there's any nice pattern, so let's painstakingly
+	// chip out the different components one by one with regex.
+
+	// #1 MESSAGE
+
+	// Split after the first occurrence of a square bracket using a
+	// zero-width look-behind assertion.
+
+	$arr = preg_split('/(?<=])/', $line, 2);
+
+	 // Parallel assignment gives an error here and nowhere else?
+	 // Warning: Undefined array key 1
+
+	$everythingElse = $arr[0];
+	$message        = $arr[1] ?? ""; // null coalescing operator
+
+	// #2 DATE
+
+	list($date, $everythingElse) =
+
+		// Split on the first occurrence of a space preceded by a digit
+		// character and succeeded by a non-digit character.
+
+		preg_split('/(?<=[0-9]) (?=[^0-9])/', $everythingElse, 2);
+
+	// #3 HOSTNAME & PID
+
+	list($hostname, $processID) = explode(' ', $everythingElse, 2);
+
+	$result = array($date, $hostname, $processID, $message);
+
+	return $result;
+
+} // func
+
+function tabularizeArrayOfArrays($AoA, $headers = NULL, $indents = 0) {
+
+	$i = str_repeat("\t", $indents);
+
+	$printRow = function($row, $tag = "td") use ($i) {
+
+		echo "$i\t<tr>\n";
+
+		foreach($row as $col) {
+
+			$col = htmlentities($col);
+
+			echo "$i\t\t<$tag>$col</$tag>\n";
+
+		} // foreach
+
+		echo "$i\t</tr>\n";
+
+	}; // func
+
+	echo "\n$i<table>\n";
+
+	if ($headers) $printRow($headers, $tag = "th");
+
+	foreach($AoA as $row) $printRow($row);
+
+	echo "$i</table>\n";
+
+} // func
+
+function renderPage($num, $indents = 0) {
+
+	$pages = array(
+
+		[
+			'title'    => 'User list',
+			'filename' => '/etc/passwd',
+			'headers'  => [
+
+				'Username',
+				'Password',
+				'UID',
+				'GID',
+				'Display Name',
+				'Home Directory',
+				'Default Shell',
+			],
+		], [
+			'title'    => 'Group list',
+			'filename' => '/etc/group',
+			'headers'  => [
+
+				'Group Name',
+				'Password',
+				'GID',
+				'Members',
+			],
+		], [
+			'title'    => 'Syslog',
+			'filename' => '/var/log/syslog',
+			'headers'  => [
+
+				'Date',
+				'Hostname',
+				'Application[PID]',
+				'Message',
+			],
+		],
+	);
+
+	if (!array_key_exists($num - 1, $pages)) {
+
+		echo "Invalid page.";
+
+		return;
+
+	} //method
+
+	$properties = $pages[$num - 1];
+
+	echo
+		"\n",
+		str_repeat("\t", $indents),
+		"<h3>{$properties['title']}</h3>";
+
+	tabularizeArrayOfArrays(
+
+		readDSV($properties['filename'], ':'),
+
+		$properties['headers'], $indents);
+
+} // func
+?>
+<html>
+	<head>
+		<title>CPSC222 Final Exam</title>
+	</head>
+	<body>
+		<h1>CPSC222 Final Exam</h1>
+		<?php
+			if (isset($login_success) && !$login_success)
+
+				echo "<p>Invalid login...</p>\n";
+		?>
+		<form
+			method="POST"
+			action="<?php echo $_SERVER['PHP_SELF'];?>">
+			<table>
+				<tr>
+					<td>
+						<label for="un">
+							Username:
+						</label>
+					</td>
+					<td>
+						<input
+							id="un"
+							name="username"
+							type="text">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<label for="pw">
+							Password:
+						</label>
+					</td>
+					<td>
+						<input
+							id="pw"
+							name="password"
+							type="password">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<input
+						type="submit"
+						value="Login">
+					</td>
+				</tr>
+			</table>
+		</form>
+		<hr><footer><?php echo $footer; ?></footer>
+	</body>
+</html>
