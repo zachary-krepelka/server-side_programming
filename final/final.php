@@ -218,6 +218,8 @@ function readDSV($fname, $delim = ',') {
 
 function processSyslogLine($line) {
 
+	// Disclaimer: error prone, needs more thought.
+
 	// It doesn't look like there's any nice pattern, so let's painstakingly
 	// chip out the different components one by one with regex.
 
