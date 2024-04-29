@@ -185,7 +185,7 @@ function validate($candidate_username, $candidate_password) {
 
 function sanitize($str) {
 
-	return preg_replace('/[^-a-zA-Z0-9]+/', '', trim($str));
+	return trim(preg_replace('/[^-a-zA-Z0-9]+/', '', $str));
 
 } // func
 
