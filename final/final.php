@@ -246,7 +246,7 @@ function processSyslogLine($line) {
 		preg_split('/(?<=[0-9]) (?=[^0-9])/', $everythingElse, 2);
 
 		// Assumes that the hostname does not start with a digit.
-		// Retropsectivey, this is a bad assumption.
+		// Retrospectively, this is a bad assumption.
 
 	// #3 HOSTNAME & PID
 
